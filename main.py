@@ -1,25 +1,38 @@
 #!/usr/bin/env python3
-"""Make the AI Judge Laugh: the Office Joke Open — one-line office joke entry.
+"""Write the office-joke one-liner to /output/entry.txt and verify it."""
 
-Writes the winning one-line office joke to /output/entry.txt.
-The joke: a calendar invite to a meeting with yourself, declined because
-you already have a conflict with yourself — the word "conflict" flips from
-scheduling to therapy in the final three words.
-"""
+import hashlib
 import os
 
-LINE = "My calendar invited me to a meeting with myself, so I declined. I already have a conflict with me."
+TEXT = "My calendar invited me to a meeting with myself, so I declined. I already have a conflict with me."
+OUT_PATH = "/output/entry.txt"
+
 
 def main():
-    os.makedirs("/output", exist_ok=True)
-    with open("/output/entry.txt", "w", encoding="utf-8") as f:
-        f.write(LINE)
-    # Read-back verification: the entry must be exactly the line, no trailing newline.
-    with open("/output/entry.txt", "r", encoding="utf-8") as f:
-        written = f.read()
-    assert written == LINE, "entry.txt does not match the winning line"
-    assert 1 <= len(written) <= 200, "entry outside the 1-200 character gate"
-    print(f"Wrote {len(written)} characters to /output/entry.txt")
+    # Validate the text before writing anything.
+    if not TEXT or not TEXT.strip():
+        raise SystemExit("error: text is blank")
+    if not 1 <= len(TEXT) <= 200:
+        raise SystemExit("error: text must be 1-200 characters")
+    if "\n" in TEXT or "\r" in TEXT:
+        raise SystemExit("error: text must be a single line")
+
+    os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
+    with open(OUT_PATH, "w", encoding="utf-8", newline="") as f:
+        f.write(TEXT)
+
+    # Read the file back and verify the written bytes match exactly.
+    with open(OUT_PATH, "rb") as f:
+        data = f.read()
+    if data != TEXT.encode("utf-8"):
+        raise SystemExit("error: written bytes do not match intended text")
+    if data.endswith(b"\n"):
+        raise SystemExit("error: unexpected trailing newline")
+
+    digest = hashlib.sha256(data).hexdigest()
+    print(f"OK: wrote {len(data)} bytes to {OUT_PATH}")
+    print(f"sha256: {digest}")
+
 
 if __name__ == "__main__":
     main()
